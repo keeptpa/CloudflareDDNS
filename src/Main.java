@@ -1,6 +1,4 @@
 import com.google.gson.Gson;
-
-import java.io.Console;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,6 +14,9 @@ public class Main {
         Constant.key = args[0];
         //check config
         String inputZoneID = null;
+        String lastIP = null;
+        boolean iPOnDemand = false;
+
         if(Config.existConfig()){
             //read config
             Logger.log("Found config, reading...");
@@ -28,6 +29,8 @@ public class Main {
                     }
                 }
                 inputZoneID = config.zone_id;
+                lastIP = config.lastIPRecorded;
+                iPOnDemand = config.enableIPOnDemand;
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -37,12 +40,24 @@ public class Main {
             Scanner sc = new Scanner(System.in);
             inputZoneID = sc.nextLine();
         }
+        Logger.log("Getting external IP...");
+        String externalIP = CFHttpClient.requestExternalIP();
+
+        if(iPOnDemand){
+            if(lastIP != null && externalIP.equals(lastIP)){
+                Logger.log("The external IP has not changed. Exiting...");
+                return;
+            }else if(lastIP != null){
+                Logger.log(String.format("The external IP has changed from %s to %s", lastIP, externalIP));
+            }
+        }
+
         Logger.log("Query all DNS records...");
         RecordInfo allInfo = CFHttpClient.requestDNSList(inputZoneID);
-        Config.generateConfigFromInfos(allInfo, inputZoneID);
+        Config.generateConfigFromInfos(allInfo, inputZoneID, externalIP);
 
+        //Patch up changed DNS record
         if(!dnsNameNeedsControl.isEmpty()){
-            String externalIP = CFHttpClient.requestExternalIP();
             boolean isChanged = false;
             //for (String id : dnsNameNeedsControl) {
                 for (Result result : allInfo.result) {
@@ -61,6 +76,7 @@ public class Main {
             Logger.log("You have not marked any of the records that needs controlled");
         }
         Logger.log("<<Finished>>");
+        return;
     }
 
     public static void initFolder(){

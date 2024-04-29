@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.HashSet;
 
 public class Config {
-    public static void generateConfigFromInfos(RecordInfo recordInfo, String zoneID) {
+    public static void generateConfigFromInfos(RecordInfo recordInfo, String zoneID, String lastIPRecorded){
         ConfigPalette configFile = new ConfigPalette();
         configFile.recordPalettes = new HashSet<>();
         if(!Config.existConfig()){
@@ -50,6 +50,7 @@ public class Config {
             }
         }
 
+        configFile.lastIPRecorded = lastIPRecorded;
         configFile.zone_id = zoneID;
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String jsonString = gson.toJson(configFile);
@@ -59,6 +60,7 @@ public class Config {
             e.printStackTrace();
         }
     }
+
     public static boolean existConfig(){
         return Files.exists(Path.of(Constant.configPath));
     }
@@ -75,4 +77,7 @@ class RecordPalette {
 class ConfigPalette{
     public HashSet<RecordPalette> recordPalettes;
     public String zone_id;
+    public String lastIPRecorded;
+    public String IPOnDemandNote = "IP Ondemand means ONLY when external IP has changed, the DNS record will be updated.";
+    public boolean enableIPOnDemand = false;
 }
