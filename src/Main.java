@@ -70,7 +70,7 @@ public class Main {
                 }
             //}
             if(!isChanged){
-                Logger.log("No record need to update");
+                Logger.log("All records are up to date");
             }
         }else{
             Logger.log("You have not marked any of the records that needs controlled");
